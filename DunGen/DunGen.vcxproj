@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{381BFE59-88F1-4380-89BA-371AE1128358}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>DunGen</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>H:\Code\Irrlicht\irrlicht-1.8.1\include;$(SolutionDir);$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
+    <LibraryPath>H:\Code\Irrlicht\irrlicht-1.8.1\lib\Win32-visualstudio;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(Configuration)\..\..\bin_debug\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>H:\Code\Irrlicht\irrlicht-1.8.1\include;$(SolutionDir);$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
+    <LibraryPath>H:\Code\Irrlicht\irrlicht-1.8.1\lib\Win32-visualstudio;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(Configuration)\..\..\bin\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;DUNGEN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;DUNGEN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="implementation\Adapter.cpp" />
+    <ClCompile Include="implementation\Architect.cpp" />
+    <ClCompile Include="implementation\Corridor.cpp" />
+    <ClCompile Include="implementation\Corridor_Init.cpp" />
+    <ClCompile Include="implementation\DunGen.cpp" />
+    <ClCompile Include="implementation\DungeonGenerator.cpp" />
+    <ClCompile Include="implementation\LSystem.cpp" />
+    <ClCompile Include="implementation\MaterialProvider.cpp" />
+    <ClCompile Include="implementation\MeshCave.cpp" />
+    <ClCompile Include="implementation\MeshCave_Init.cpp" />
+    <ClCompile Include="implementation\Roompattern.cpp" />
+    <ClCompile Include="implementation\VisibilityTest.cpp" />
+    <ClCompile Include="implementation\VoxelCave.cpp" />
+    <ClCompile Include="implementation\DunGenXMLReader.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="implementation\Adapter.h" />
+    <ClInclude Include="implementation\Architect.h" />
+    <ClInclude Include="implementation\Corridor.h" />
+    <ClInclude Include="implementation\DockingSite.h" />
+    <ClInclude Include="implementation\DungeonGenerator.h" />
+    <ClInclude Include="implementation\Helperfunctions.h" />
+    <ClInclude Include="implementation\LSystem.h" />
+    <ClInclude Include="implementation\MaterialCaveMultiColor.h" />
+    <ClInclude Include="implementation\MaterialCaveSingleColor.h" />
+    <ClInclude Include="implementation\MaterialCorridor.h" />
+    <ClInclude Include="implementation\MaterialProvider.h" />
+    <ClInclude Include="implementation\MeshCave.h" />
+    <ClInclude Include="implementation\RandomGenerator.h" />
+    <ClInclude Include="implementation\Roominstance.h" />
+    <ClInclude Include="implementation\Roompattern.h" />
+    <ClInclude Include="implementation\Shader.h" />
+    <ClInclude Include="implementation\Timer.h" />
+    <ClInclude Include="implementation\VisibilityTest.h" />
+    <ClInclude Include="implementation\VoxelCave.h" />
+    <ClInclude Include="implementation\DunGenXMLReader.h" />
+    <ClInclude Include="interface\ArchitectCommon.h" />
+    <ClInclude Include="interface\CorridorCommon.h" />
+    <ClInclude Include="interface\DunGen.h" />
+    <ClInclude Include="interface\LSystemCommon.h" />
+    <ClInclude Include="interface\MaterialDunGen.h" />
+    <ClInclude Include="interface\MeshCaveCommon.h" />
+    <ClInclude Include="interface\VoxelCaveCommon.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

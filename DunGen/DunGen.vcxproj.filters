@@ -1,0 +1,158 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="implementation">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="implementation\generation architect">
+      <UniqueIdentifier>{55a9c08b-494a-44b5-b37d-9e4e791945e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="implementation\generation cave">
+      <UniqueIdentifier>{d9f5438e-56bb-4288-894e-c9bb46e11d38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="implementation\generation corridor">
+      <UniqueIdentifier>{bd631af3-71a1-4c0a-87c6-0a11d2ba3d89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="implementation\generation room">
+      <UniqueIdentifier>{280f8f05-f0c3-420b-be39-e3f0ece2d8be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="implementation\helpers">
+      <UniqueIdentifier>{a6b626da-5b8c-4bd3-a67c-40e4f554fe7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="implementation\materials">
+      <UniqueIdentifier>{9ef35f1a-e3d1-46ea-914d-e756a5b1552d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="implementation\DunGen.cpp">
+      <Filter>implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\DungeonGenerator.cpp">
+      <Filter>implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\Architect.cpp">
+      <Filter>implementation\generation architect</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\Corridor.cpp">
+      <Filter>implementation\generation corridor</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\Corridor_Init.cpp">
+      <Filter>implementation\generation corridor</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\VoxelCave.cpp">
+      <Filter>implementation\generation cave</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\MeshCave_Init.cpp">
+      <Filter>implementation\generation cave</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\MeshCave.cpp">
+      <Filter>implementation\generation cave</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\LSystem.cpp">
+      <Filter>implementation\generation architect</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\Roompattern.cpp">
+      <Filter>implementation\generation room</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\Adapter.cpp">
+      <Filter>implementation\generation corridor</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\MaterialProvider.cpp">
+      <Filter>implementation\materials</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\VisibilityTest.cpp">
+      <Filter>implementation\generation corridor</Filter>
+    </ClCompile>
+    <ClCompile Include="implementation\DunGenXMLReader.cpp">
+      <Filter>implementation</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="implementation\DungeonGenerator.h">
+      <Filter>implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\Architect.h">
+      <Filter>implementation\generation architect</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\Corridor.h">
+      <Filter>implementation\generation corridor</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\VoxelCave.h">
+      <Filter>implementation\generation cave</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\MeshCave.h">
+      <Filter>implementation\generation cave</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\MaterialCorridor.h">
+      <Filter>implementation\materials</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\MaterialCaveMultiColor.h">
+      <Filter>implementation\materials</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\MaterialCaveSingleColor.h">
+      <Filter>implementation\materials</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\LSystem.h">
+      <Filter>implementation\generation architect</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\Shader.h">
+      <Filter>implementation\materials</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\Timer.h">
+      <Filter>implementation\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\Roompattern.h">
+      <Filter>implementation\generation room</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\Roominstance.h">
+      <Filter>implementation\generation room</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\RandomGenerator.h">
+      <Filter>implementation\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\Helperfunctions.h">
+      <Filter>implementation\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\DockingSite.h">
+      <Filter>implementation\generation corridor</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\ArchitectCommon.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\CorridorCommon.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\DunGen.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\LSystemCommon.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\MeshCaveCommon.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\VoxelCaveCommon.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\Adapter.h">
+      <Filter>implementation\generation corridor</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\MaterialProvider.h">
+      <Filter>implementation\materials</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\VisibilityTest.h">
+      <Filter>implementation\generation corridor</Filter>
+    </ClInclude>
+    <ClInclude Include="implementation\DunGenXMLReader.h">
+      <Filter>implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\MaterialDunGen.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<RandomCavesConfig>
+	<General Derivation="5" />
+	<Start Symbols="FXY" Min="5" Max="10" />
+	<Rules Symbols="FFFFXY[]+-ouzg|$" Min="5" Max="10" />
+	<AngleYaw Min="0.0" Max="360.0" Digits="0" />
+	<AnglePitch Min="0.0" Max="360.0" Digits="0" />
+	<AngleRoll Min="0.0" Max="360.0" Digits="0" />
+	<RadiusStart Min="10.0" Max="30.0" Digits="0" />
+	<RadiusFactor Min="0.5" Max="1.0" Digits="2" />
+	<RadiusDecrement Min="0.0" Max="2.0" Digits="1" />
+</RandomCavesConfig>

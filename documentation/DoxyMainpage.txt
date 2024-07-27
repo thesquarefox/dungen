@@ -1,0 +1,1193 @@
+/*!
+\mainpage DunGen 1.2.4 API documentation
+
+\section intro Introduction
+
+Welcome to the DunGen API documentation.
+Here you'll find any information you'll need to develop applications with the %DunGen library.<BR>
+You can get the newest versions of %DunGen at 
+<A HREF="http://dungen.squarefox.net" >dungen.squarefox.net</A>.
+
+%DunGen allows you to procedurally generate dungeons for your
+<A HREF="http://irrlicht.sourceforge.net/Irrlicht">Irrlicht</A>
+application.
+
+A dungeon is created in several steps: <BR>
+1. create a L-system <BR>
+2. create a voxel cave from it <BR>
+3. erode the voxel cave, if wished <BR>
+4. place rooms <BR>
+5. create corridors <BR>
+6. filter the voxel cave, if wished <BR>
+7. create a mesh cave from the voxel cave <BR>
+8. assemble the dungeon and add it to your scene <BR>
+
+\section lsys L-Systems
+
+A L-system (Lindenmayer system) is a grammar based mechanism, to describe
+fractal structures. It was originally developed by Lindenmayer to generate plants,
+but many L-systems drawn with a radius are suitable for some nice caves.
+
+A L-system generates turtle graphics drawing instructions and has some parameters.<BR>
+In %DunGen these parameters are: angleYaw, anglePitch, angleRoll, radiusStart, radiusFactor, radiusDecrementor.<BR>
+There are several instructions, which the turtle can perform. In %DunGen, these are:
+ 
+'F' - draw forward<BR>
+'!' - decrease drawing radius, the formula is: newRadius = radiusFactor * oldRadius - radiusDecrement<BR>
+'[' - push actual position, direction and radius on stack<BR>
+']' - pop position, direction and radius from stack<BR>
+'+' - rotate around the Up axis by angleYaw<BR>
+'-' - rotate around the Up axis by -angleYaw<BR>
+'u' - rotate around the Left axis by anglePitch<BR>
+'o' - rotate around the Left axis by -anglePitch<BR>
+'z' - rotate around the Front axis by angleRoll<BR>
+'g' - rotate around the Front axis by -angleRoll<BR>
+'|' - rotate around the Up axis by 180 degrees<BR>
+'$' - orient turtle in the XZ-plane<BR>
+
+\section cave Generating Caves
+
+Caves are first created as voxel caves from L-systems.
+The L-system is adapted in size, so it fits exactly the voxelspace.
+The drawing radius of the L-system remains unchanged.
+The voxel cave can be eroded an arbitrary amount of times.
+Eroding removes random cave surface voxels with a specified likelihood (maybe you'll reach the border of the voxelspace on some parts of the cave - there nothing is eroded anymore).
+Sometimes some voxels in the cave are floating around (e.g. through erosion, or the nature of the L-system).
+You can remove them by filtering the cave.
+
+\section rooms Roompatterns
+
+You can provide your own room patterns for %DunGen.
+These patterns have to be .irr (Irrlicht scene) files and can be used as templates for rooms in the dungeon.
+
+Each pattern has to fulfil some requirements, for being suitable: <BR>
+If corridors shall be to connectable to the rooms, they have to have docking sites.
+Each docking site is a 2-dimensional mesh, with exact one boundary curve.
+Docking site mesh nodes in the .irr-file have to be named "dockingsite_xxx",
+where xxx is a increasing number, beginning with 000, 001, ... .
+You can have up to 1000 docking sites for each roompattern.
+
+\section corridors Docking Corridors
+
+Corridors can be connected to rooms and the cave.
+If you connect them to rooms, you specify the room and docking site to connect to.
+If you connect them to caves, you specify a vector of minVoxels and maxVoxels.
+Those voxels define, in which region the cave is connected.
+The connection is done after a search for a possible cave section.
+There are 4 different search directions: X-positive, X-negative, Z-positive, Z-negative.
+Assume you search in positive X-direction.
+Then minVox would specify the start of the search.
+The Y and Z coordinates of minVoxels and maxVoxels specify the profile (a rectangle) of the created cave docking site (the docking site for the cave is created automatically).
+The difference between the X coordinates is additionally carved into the cave.
+
+\section detail Detailobjects
+
+It's possible to place detailobjects (e.g. torches) within corridors.
+They can be placed in random distances, if wished.
+Please refer to SDetailobjectParameters for possible options.
+*/
+
+# ==============================================================================================================================================================
+
+/*!
+\page tutorial1 Tutorial 1: Create Dungeon by Code
+
+Here you find the code for a tutorial dungeon with a cave, some rooms, corridors and detailobjects. <BR>
+
+\code
+#include <iostream>
+#include <irrlicht.h>
+#include <DunGen.h>
+
+#ifdef _MSC_VER
+#pragma comment(lib, "Irrlicht.lib")
+#pragma comment(lib, "DunGen.lib")
+#endif
+
+int main(int argc, char* argv[])
+{
+	// check for additional parameters: resolution, anti aliasing
+	irr::core::dimension2du resolution = irr::core::dimension2du(1200, 900);
+	if (argc>=3)
+	{
+		resolution.Width = atoi(argv[1]);
+		resolution.Height = atoi(argv[2]);
+	}
+	int antiAlias = 0;
+	if (argc>=4)
+		antiAlias = atoi(argv[3]);
+
+	std::cout << "Dungeongenerator Tutorial 01 is started." << std::endl;
+	std::cout << "Resolution is: " << resolution.Width << " * " << resolution.Height << " , AntiAliasing: " <<  antiAlias << std::endl;
+
+	// create Irrlicht device
+	irr::SIrrlichtCreationParameters irrlichtParameter;
+	irrlichtParameter.DriverType = irr::video::EDT_DIRECT3D9;
+	irrlichtParameter.WindowSize = resolution;
+	irrlichtParameter.Bits = 32;
+	irrlichtParameter.Fullscreen = false;
+	irrlichtParameter.Stencilbuffer = false;
+	irrlichtParameter.Vsync = false;
+	irrlichtParameter.AntiAlias = antiAlias;
+	irrlichtParameter.EventReceiver = 0;
+
+	irr::IrrlichtDevice* irrDevice = irr::createDeviceEx(irrlichtParameter);
+	if(irrDevice == 0)
+	{
+		std::cout << "Irrlicht device could not be created, program is terminated." << std::endl;
+		return 1;
+	}
+	irr::scene::ISceneManager* sceneManager = irrDevice->getSceneManager();
+	irr::video::IVideoDriver* videoDriver = irrDevice->getVideoDriver();
+	irrDevice->setWindowCaption(L"Dungeongenerator Tutorial 01: Create dungeon by code.");
+
+	//************************************************************************
+	// Start of dungeon creation
+	//************************************************************************
+
+	// create Dungeongenerator instance
+	DunGen::CDunGen *dunGen = new DunGen::CDunGen(irrDevice);
+	dunGen->StartUp();
+	dunGen->SetPrintToConsole(true);
+
+	// load room patterns and set materials
+	if (!antiAlias)
+	{
+		dunGen->RoomPatternLoad("data/roompattern_sphere.irr");
+		dunGen->RoomPatternLoad("data/roompattern_square1.irr");
+		dunGen->RoomPatternLoad("data/roompattern_square2.irr");
+		dunGen->RoomPatternLoad("data/roompattern_square4.irr");
+		dunGen->MaterialSetCorridor("data/corridor_texture.jpg", false, false);
+		dunGen->MaterialSetCaveMultiColor(false, false);
+
+	}
+	else
+	{
+		dunGen->RoomPatternLoad("data/roompattern_sphere_aa.irr");
+		dunGen->RoomPatternLoad("data/roompattern_square1_aa.irr");
+		dunGen->RoomPatternLoad("data/roompattern_square2_aa.irr");
+		dunGen->RoomPatternLoad("data/roompattern_square4_aa.irr");
+		dunGen->MaterialSetCorridor("data/corridor_texture.jpg", false, true);
+		dunGen->MaterialSetCaveMultiColor(false, true);
+	}
+
+	// create L-system
+	dunGen->LSystemSetStart("YYFYF");
+	dunGen->LSystemAddRule('F',"F-YX-X---");
+	dunGen->LSystemAddRule('X',"F$F++F-X");
+	dunGen->LSystemAddRule('Y',"oYX--XX++");
+	dunGen->LSystemSetParameter(DunGen::ELSystemParameter::ANGLE_YAW, 250.0);
+	dunGen->LSystemSetParameter(DunGen::ELSystemParameter::ANGLE_PITCH, 1.0);
+	dunGen->LSystemSetParameter(DunGen::ELSystemParameter::ANGLE_ROLL, 0.0);
+	dunGen->LSystemSetParameter(DunGen::ELSystemParameter::RADIUS_DECREMENT, 0.0);
+	dunGen->LSystemSetParameter(DunGen::ELSystemParameter::RADIUS_FACTOR, 1.0);
+	dunGen->LSystemSetParameter(DunGen::ELSystemParameter::RADIUS_START, 14.0);
+	dunGen->CreateLSystemDerivation(8);
+
+	// create voxel cave
+	dunGen->CreateVoxelCave();
+	dunGen->ErodeVoxelCave(0.5);
+
+	// place rooms
+	dunGen->CreateRoom(0,irr::core::vector3d<double>(379.0,239.0,497.0),irr::core::vector3d<double>(0.0,180.0,0.0),irr::core::vector3d<double>(1.0,1.0,1.0));	//0
+	dunGen->CreateRoom(0,irr::core::vector3d<double>(14.0,260.0,121.0),irr::core::vector3d<double>(0.0,0.0,0.0),irr::core::vector3d<double>(1.0,1.0,1.0));		//1
+
+	dunGen->CreateRoom(3,irr::core::vector3d<double>(539.0,281.0,378.0),irr::core::vector3d<double>(0.0,180.0,0.0),irr::core::vector3d<double>(1.0,1.0,1.0));	//2
+	dunGen->CreateRoom(3,irr::core::vector3d<double>(312.0,272.0,-80.0),irr::core::vector3d<double>(0.0,270.0,0.0),irr::core::vector3d<double>(1.0,1.0,1.0));	//3
+	dunGen->CreateRoom(3,irr::core::vector3d<double>(72.0,202.0,557.0),irr::core::vector3d<double>(0.0,80.0,0.0),irr::core::vector3d<double>(1.0,1.0,1.0));		//4
+
+	dunGen->CreateRoom(2,irr::core::vector3d<double>(404.0,259.0,651.0),irr::core::vector3d<double>(0.0,90.0,0.0),irr::core::vector3d<double>(1.0,1.0,1.0));	//5
+	dunGen->CreateRoom(2,irr::core::vector3d<double>(145.0,260.0,0.0),irr::core::vector3d<double>(0.0,200.0,0.0),irr::core::vector3d<double>(1.0,1.0,1.0));		//6
+	dunGen->CreateRoom(2,irr::core::vector3d<double>(700.0,200,250.0),irr::core::vector3d<double>(0.0,305.0,0.0),irr::core::vector3d<double>(1.0,1.0,1.0));		//7
+
+	dunGen->CreateRoom(1,irr::core::vector3d<double>(440.0,277.0,803.0),irr::core::vector3d<double>(0.0,90.0,0.0),irr::core::vector3d<double>(1.0,1.0,1.0));	//8
+	dunGen->CreateRoom(1,irr::core::vector3d<double>(287.0,270.0,-245.0),irr::core::vector3d<double>(0.0,270.0,0.0),irr::core::vector3d<double>(1.0,1.0,1.0));	//9
+	dunGen->CreateRoom(1,irr::core::vector3d<double>(-129.0,211.0,584.0),irr::core::vector3d<double>(0.0,20.0,0.0),irr::core::vector3d<double>(1.0,1.0,1.0));	//10
+	dunGen->CreateRoom(1,irr::core::vector3d<double>(-100.0,300.0,-70.0),irr::core::vector3d<double>(0.0,300.0,0.0),irr::core::vector3d<double>(1.0,1.0,1.0));	//11
+
+	// set corridor parameters
+	dunGen->CorrdidorAddPoint(-4.0,-4.0, 1.4);
+	dunGen->CorrdidorAddPoint(-4.0, 0.0, 0.9);
+	dunGen->CorrdidorAddPoint(-3.0, 2.0, 0.6);
+	dunGen->CorrdidorAddPoint(-2.0, 3.0, 0.3);
+	dunGen->CorrdidorAddPoint( 0.0, 4.0, 0.0);
+	dunGen->CorrdidorAddPoint( 4.0, 0.0, 0.9);
+	dunGen->CorrdidorAddPoint( 4.0,-4.0, 1.4);
+	dunGen->CorrdidorAddPoint( 0.0,-4.0, 2.0);
+
+	// specify detailobjects
+	DunGen::SDetailobjectParameters detailObject;
+	irr::scene::IMesh* mesh = sceneManager->getMesh("data/detailobject.3ds");
+	detailObject.Node = sceneManager->addMeshSceneNode(mesh);
+	detailObject.Node->setName("Torch");
+	detailObject.Node->setMaterialType(irr::video::EMT_SOLID);
+	detailObject.Node->setMaterialFlag(irr::video::EMF_LIGHTING,false);
+	detailObject.Node->setMaterialFlag(irr::video::EMF_ANTI_ALIASING, (0!=antiAlias) );
+	detailObject.Position = irr::core::vector2d<double>(-4.0,-0.5);
+	detailObject.Scale =  irr::core::vector3d<double>(1.0,1.0,1.0);
+	detailObject.Rotation =  irr::core::vector3d<double>(0.0,90.0,0.0);
+	detailObject.DistanceSampling = 0.6;
+	detailObject.DistanceNumFactor = 4;
+	detailObject.DistanceNumMin = 3;
+	detailObject.DistanceNumMax = 3;
+	detailObject.DistanceNumMinFirstElement = 0;
+	detailObject.DistanceNumMaxFirstElement = 0;
+	detailObject.ObjectAtT1 = false;
+	dunGen->CorrdidorAddDetailObject(detailObject);
+	detailObject.Position = irr::core::vector2d<double>(4.0,-0.5);
+	detailObject.Rotation =  irr::core::vector3d<double>(0.0,270.0,0.0);
+	dunGen->CorrdidorAddDetailObject(detailObject);
+
+	// create corridors
+	bool sightBlocking;	// tells us, if the corridor is definitely sight blocking, but we don't use this information here
+	dunGen->CreateCorridorRoomRoom(0,2,4.0,200.0,2,1,4.0,200.0,sightBlocking);
+	dunGen->CreateCorridorRoomRoom(0,1,4.0,100.0,5,0,4.0,100.0,sightBlocking);
+	dunGen->CreateCorridorRoomRoom(5,1,4.0,100.0,8,0,4.0,100.0,sightBlocking);
+	dunGen->CreateCorridorRoomRoom(2,2,4.0,150.0,7,0,4.0,250.0,sightBlocking);
+	dunGen->CreateCorridorRoomRoom(2,3,4.0,150.0,7,1,4.0,250.0,sightBlocking);
+
+	dunGen->CreateCorridorRoomRoom(1,1,4.0,200.0,6,0,4.0,200.0,sightBlocking);
+	dunGen->CreateCorridorRoomRoom(1,2,4.0,200.0,11,0,4.0,200.0,sightBlocking);
+	dunGen->CreateCorridorRoomRoom(6,1,4.0,200.0,3,3,4.0,200.0,sightBlocking);
+	dunGen->CreateCorridorRoomRoom(3,2,4.0,100.0,9,0,4.0,100.0,sightBlocking);
+
+	dunGen->CreateCorridorRoomRoom(4,1,4.0,100.0,10,0,4.0,100.0,sightBlocking);
+	dunGen->CreateCorridorRoomRoom(4,2,4.0,400.0,4,3,4.0,400.0,sightBlocking);
+
+	dunGen->CreateCorridorRoomCave(4,0,4.0,100.0, irr::core::vector3d<unsigned int>(46,172,470),irr::core::vector3d<unsigned int>(54,180,470),DunGen::EDirection::Z_NEGATIVE,4.0,100.0,sightBlocking);
+	dunGen->CreateCorridorRoomCave(0,0,4.0,200.0, irr::core::vector3d<unsigned int>(136,189,450),irr::core::vector3d<unsigned int>(144,197,450),DunGen::EDirection::Z_NEGATIVE,4.0,200.0,sightBlocking);
+	dunGen->CreateCorridorRoomCave(0,3,4.0,100.0, irr::core::vector3d<unsigned int>(389,231,450),irr::core::vector3d<unsigned int>(397,239,450),DunGen::EDirection::Z_NEGATIVE,4.0,100.0,sightBlocking);
+	dunGen->CreateCorridorRoomCave(2,0,4.0,400.0, irr::core::vector3d<unsigned int>(478,257,260),irr::core::vector3d<unsigned int>(486,265,260),DunGen::EDirection::Z_NEGATIVE,4.0,200.0,sightBlocking);
+
+	dunGen->CreateCorridorRoomCave(3,1,4.0,400.0, irr::core::vector3d<unsigned int>(460,264,80),irr::core::vector3d<unsigned int>(468,272,80),DunGen::EDirection::Z_POSITIVE,4.0,400.0,sightBlocking);
+	dunGen->CreateCorridorRoomCave(3,0,4.0,50.0, irr::core::vector3d<unsigned int>(340,287,40),irr::core::vector3d<unsigned int>(348,295,40),DunGen::EDirection::Z_POSITIVE,4.0,50.0,sightBlocking);
+	dunGen->CreateCorridorRoomCave(1,0,4.0,400.0, irr::core::vector3d<unsigned int>(50,318,262),irr::core::vector3d<unsigned int>(50,326,270),DunGen::EDirection::X_POSITIVE,4.0,300.0,sightBlocking);
+	dunGen->CreateCorridorRoomCave(1,3,4.0,100.0, irr::core::vector3d<unsigned int>(80,181,240),irr::core::vector3d<unsigned int>(88,189,240),DunGen::EDirection::Z_POSITIVE,4.0,100.0,sightBlocking);
+
+	// modify corridor parameters
+	dunGen->CorrdidorRemovePoints();
+	dunGen->CorrdidorAddPoint(-4.0,-4.0, 0.0);
+	dunGen->CorrdidorAddPoint(-4.0, 4.0, 1.0);
+	dunGen->CorrdidorAddPoint(4.0, 4.0, 2.0);
+	dunGen->CorrdidorAddPoint(4.0, -4.0, 1.0);
+
+	dunGen->CorrdidorRemoveDetailobjects();
+	detailObject.Position = irr::core::vector2d<double>(4.0,0.0);
+	dunGen->CorrdidorAddDetailObject(detailObject);
+	detailObject.Position = irr::core::vector2d<double>(-4.0,0.0);
+	detailObject.Rotation =  irr::core::vector3d<double>(0.0,90.0,0.0);
+	dunGen->CorrdidorAddDetailObject(detailObject);
+	
+	// cave to cave corridor with 2 voxel additional digging depth
+	dunGen->CreateCorridorCaveCave(
+		irr::core::vector3d<unsigned int>(300,306,205),irr::core::vector3d<unsigned int>(302,314,213),DunGen::EDirection::X_NEGATIVE,4.0,200.0,
+		irr::core::vector3d<unsigned int>(350,244,259),irr::core::vector3d<unsigned int>(352,252,267),DunGen::EDirection::X_POSITIVE,4.0,200.0,
+		sightBlocking);
+
+	// create mesh cave (including filter step)
+	dunGen->RemoveHoveringVoxelFragments();
+	dunGen->CreateMeshCave();
+
+	// assemble dungeon
+	dunGen->AddDungeon(sceneManager->getRootSceneNode(),sceneManager);
+
+	// drop the detailobject-mesh and hide the original node (it is duplicated in the dungeon already)
+	// note: you cannot drop the original node itself, this would lead to some strange behavior
+	// it seems, that the clones depend on the original node on some way
+	mesh->drop();
+	detailObject.Node->setVisible(false);
+
+	// deletes all not used objects from the Dungeongenerator to save memory
+	dunGen->ShutDown();
+
+	//************************************************************************
+	// Dungeon creation finished
+	//************************************************************************
+
+	// create camera
+	irr::scene::ICameraSceneNode* camera = sceneManager->addCameraSceneNodeFPS(0,100.0f,0.05f);
+	camera->setFarValue(20000.0f);
+	camera->setPosition(irr::core::vector3df(0,0,0));
+	camera->setTarget(irr::core::vector3df(99999.f, 99999.f, 99999.f));
+
+	irr::s32 lastFPS(0), actFPS(0);
+	irr::core::vector3d<int> lastCamPos(-1,-1,-1);
+	irr::core::vector3d<int> actCamPos(0,0,0);
+	irr::core::vector3df tmp;
+
+	// as long as the engine is active:
+	while(irrDevice->run() && videoDriver)
+	{
+		if (irrDevice->isWindowActive())
+		{
+			// draw everything
+			videoDriver->beginScene(true, true, irr::video::SColor(255,100,101,140));
+			sceneManager->drawAll();
+			videoDriver->endScene();
+
+			actFPS = videoDriver->getFPS();
+
+			tmp = camera->getAbsolutePosition();
+			actCamPos.X = static_cast<int>(tmp.X + 0.5f);
+			actCamPos.Y = static_cast<int>(tmp.Y + 0.5f);
+			actCamPos.Z = static_cast<int>(tmp.Z + 0.5f);
+
+			if (actFPS != lastFPS || lastCamPos != actCamPos)
+			{
+				// update FPS and camera position
+				// and show them as window name
+				lastFPS = actFPS;
+				lastCamPos = actCamPos;
+
+				irr::core::stringw str = L"Dungeongenerator Tutorial 01: Create dungeon by code. - FPS: ";
+				str += actFPS;
+				str += " - Position: (";
+				str += actCamPos.X;
+				str += ",";
+				str += actCamPos.Y;
+				str += ",";
+				str += actCamPos.Z;
+				str += ")";
+
+				irrDevice->setWindowCaption(str.c_str());
+			}
+		}
+		else
+			irrDevice->yield();
+	}
+
+	// destroy the engine
+	irrDevice->drop();
+	return 0;
+}
+\endcode
+
+Try also some other L-system (of course, then you have to replace the rooms and corridors).
+Some nice caves are:
+
+"Bizzare": start = "uFgF", rule1 = 'F'->"Y[FF]", rule2 = 'X'->"YFF+FF]+F", rule3 = 'Y'->"F[YXFFF[Y", <BR>
+angleYaw = 340, anglePitch = 12, angleRoll = -20.8334, startRadius, = 20, radiusFactor = 1, radiusDecrement = 0 <BR>
+iterationDepth = 7
+
+"Mayan Sunsphere": start = "W", rule1 = 'W'->"W+[X]", rule2 = 'X'->"YYYYYYYYY", rule3 = 'Y'->"FoFoFoFo", <BR>
+angleYaw = 10, anglePitch = 10, angleRoll = 0, startRadius, = 32, radiusFactor = 1, radiusDecrement = 0 <BR>
+iterationDepth = 20 <BR>
+For this L-system, you need the filter step, to remove the inner voxels.
+
+
+"Wide Hall": start = "F", rule1 = 'F'->"F+FFF"<BR>
+angleYaw = 68, anglePitch = 0, angleRoll = 0, startRadius, = 16, radiusFactor = 1, radiusDecrement = 0 <BR>
+iterationDepth = 7
+
+As you see, the "Wide Hall" is a very simple L-system, so you don't need very complex systems for nice caves.
+*/
+
+# ==============================================================================================================================================================
+
+/*!
+\page tutorial2 Tutorial 2: Read Dungeon from File
+
+\section xmltags About the XML tags
+
+All of the DunGen XML tags have to be enclosed in a __DunGen__ tag.
+The other tags:
+- Tag __Material__ allows you to setup the materials for your dungeon. You can only use this tag once.
+- Tag __RandomGenerator__ allows you to specifiy the parameters for the linear congruential random generator, which is used for warping voxel vertices and placing detail objects. You can use the tags multiple times (e.g. for each corridor).
+- Tag __DrawVoxelCave__ creates a voxel dungeon, based on the specified L-system parameters. This tag can only be used once.
+- Tag __Erode__ lets you erode the voxel dungeon. This tag can be used multiple times.
+- Tag __Filter__ removes all hovering voxels that have been created so far. This tag can be used multiple times.
+- Tag __PlaceRoom__ allows you to place a room. This tag can be used multiple times.
+- Tag __CorridorSettings__ allows you to specify the corridor parameters for all corridors that are created with upcoming tags. This tag can be used multiple times (e.g. for creating different shaped corridors).
+- Tag __CorridorDetailobjects__ allows you to specify the detail objects for all corridors that are created with upcoming tags. This tag can be used multiple times.
+- Tag __CorridorRoomRoom__ creates a corridor between two rooms. This tag can be used multiple times.
+- Tag __CorridorRoomCave__ creates a corridor between a room and the cave. This tag can be used multiple times.
+- Tag __CorridorCaveCave__ creates a corridor between two parts of the cave. This tag can be used multiple times.
+- Tag __GenerateMeshCave__ transforms the voxel cave into a mesh of triangles. This tag can be used once and is usually the last tag used.
+
+\subsection Enum Parameters:
+
+Enums used in the code are specified as numbers in the XML.
+
+Parameter _Direction_ (used by tags __CorridorRoomCave__ and __CorridorCaveCave__) uses the following correlation:
+- 0: X positive
+- 1: X negative
+- 2: Z positive
+- 3: Z negative
+
+Parameter _NormalWeighting_ (used by tag __GenerateMeshCave__) uses the following correlation:
+- 0: weighting by area
+- 1: weighting by angle
+- 2: uniform weighting
+
+\subsection xmlnote Notes:
+
+1.) The Irrlicht XML reader has some issues. So try keep the layout of the provided sample XML files and try to not use comments (they can lead to wrong parsing).
+
+2.) The XML files only support mesh nodes as detailobjects. If you want to add further details, consider these mesh nodes as placeholders.
+Search for them by name (Irrlicht supports this), add other nodes at their scene graph position, make them invisible or remove them at all.
+
+\section codeTut2 Tutorial Code
+
+Here you find the code for reading a dungeon from a XML file.<BR>
+
+\code
+#include <iostream>
+#include <irrlicht.h>
+#include <DunGen.h>
+
+#ifdef _MSC_VER
+#pragma comment(lib, "Irrlicht.lib")
+#pragma comment(lib, "DunGen.lib")
+#endif
+
+int main(int argc, char* argv[])
+{
+	// check for additional parameters: resolution, anti aliasing
+	irr::core::dimension2du resolution = irr::core::dimension2du(1200, 900);
+	if (argc>=3)
+	{
+		resolution.Width = atoi(argv[1]);
+		resolution.Height = atoi(argv[2]);
+	}
+	int antiAlias = 0;
+	if (argc>=4)
+		antiAlias = atoi(argv[3]);
+	char* filename = "dungeon_ascending.xml";
+	if (argc>=5)
+		filename = argv[4];
+
+	std::cout << "Dungeongenerator Tutorial 02 is started." << std::endl;
+	std::cout << "Resolution is: " << resolution.Width << " * " << resolution.Height << " , AntiAliasing: " <<  antiAlias << " , Filename: " <<  filename << std::endl;
+
+	// create Irrlicht device
+	irr::SIrrlichtCreationParameters irrlichtParameter;
+	irrlichtParameter.DriverType = irr::video::EDT_DIRECT3D9;
+	irrlichtParameter.WindowSize = resolution;
+	irrlichtParameter.Bits = 32;
+	irrlichtParameter.Fullscreen = false;
+	irrlichtParameter.Stencilbuffer = false;
+	irrlichtParameter.Vsync = false;
+	irrlichtParameter.AntiAlias = antiAlias;
+	irrlichtParameter.EventReceiver = 0;
+
+	irr::IrrlichtDevice* irrDevice = irr::createDeviceEx(irrlichtParameter);
+	if(irrDevice == 0)
+	{
+		std::cout << "Irrlicht device could not be created, program is terminated." << std::endl;
+		return 1;
+	}
+	irr::scene::ISceneManager* sceneManager = irrDevice->getSceneManager();
+	irr::video::IVideoDriver* videoDriver = irrDevice->getVideoDriver();
+	irrDevice->setWindowCaption(L"Dungeongenerator Tutorial 02: Read dungeon from file.");
+
+	//************************************************************************
+	// Start of dungeon creation
+	//************************************************************************
+
+	// create Dungeongenerator instance
+	DunGen::CDunGen *dunGen = new DunGen::CDunGen(irrDevice);
+	dunGen->StartUp();
+	dunGen->SetPrintToConsole(true);
+
+	// read Dungeon from file
+	dunGen->ReadDungeonFromFile(filename);
+
+	// assemble dungeon
+	dunGen->AddDungeon(sceneManager->getRootSceneNode(),sceneManager);
+
+	// deletes all not used objects from the Dungeongenerator to save memory
+	dunGen->ShutDown();
+
+	//************************************************************************
+	// Dungeon creation finished
+	//************************************************************************
+
+	// create camera
+	irr::scene::ICameraSceneNode* camera = sceneManager->addCameraSceneNodeFPS(0,100.0f,0.05f);
+	camera->setFarValue(20000.0f);
+	camera->setPosition(irr::core::vector3df(0,0,0));
+	camera->setTarget(irr::core::vector3df(99999.f, 99999.f, 99999.f));
+
+	irr::s32 lastFPS(0), actFPS(0);
+	irr::core::vector3d<int> lastCamPos(-1,-1,-1);
+	irr::core::vector3d<int> actCamPos(0,0,0);
+	irr::core::vector3df tmp;
+
+	// as long as the engine is active:
+	while(irrDevice->run() && videoDriver)
+	{
+		if (irrDevice->isWindowActive())
+		{
+			// draw everything
+			videoDriver->beginScene(true, true, irr::video::SColor(255,100,101,140));
+			sceneManager->drawAll();
+			videoDriver->endScene();
+
+			actFPS = videoDriver->getFPS();
+
+			tmp = camera->getAbsolutePosition();
+			actCamPos.X = static_cast<int>(tmp.X + 0.5f);
+			actCamPos.Y = static_cast<int>(tmp.Y + 0.5f);
+			actCamPos.Z = static_cast<int>(tmp.Z + 0.5f);
+
+			if (actFPS != lastFPS || lastCamPos != actCamPos)
+			{
+				// update FPS and camera position
+				// and show them as window name
+				lastFPS = actFPS;
+				lastCamPos = actCamPos;
+
+				irr::core::stringw str = L"Dungeongenerator Tutorial 02: Read dungeon from file. - FPS: ";
+				str += actFPS;
+				str += " - Position: (";
+				str += actCamPos.X;
+				str += ",";
+				str += actCamPos.Y;
+				str += ",";
+				str += actCamPos.Z;
+				str += ")";
+
+				irrDevice->setWindowCaption(str.c_str());
+			}
+		}
+		else
+			irrDevice->yield();
+	}
+
+	// destroy the engine
+	irrDevice->drop();
+	return 0;
+}
+\endcode
+
+The following XML code basically creates the same dungeon as in tutorial 1:
+
+\code
+<?xml version="1.0"?>
+
+<DunGen>
+	<Materials BackfaceCulling = "0" AntiAliasing = "1" />
+		<Cave Shader = "MultiColor" Red = "1.0" Green = "1.0" Blue = "1.0" />
+		<Corridor Texture = "data/corridor_texture.jpg" />
+	</Materials>
+
+	<RandomGenerator Seed = "0" A = "1103515245" C = "12345" M = "32768" />
+
+	<WarpOptions Warping = "1" Smoothing = "1" WarpRandomSeed = "0" WarpStrength = "0.45" />
+
+	<DrawVoxelCave StartString = "YYFYF" StartRadius = "14" Derivation = "8">
+		<Basic VoxelBorder = "3" MinDrawRadius = "3" />
+		<Radius RadiusFactor = "1" RadiusDecrement = "0" />
+		<Angle Yaw = "250" Pitch = "1" Roll = "0"	/>
+		<Rule Symbol = "F" Substitution = "F-YX-X---" />
+		<Rule Symbol = "X" Substitution = "F$F++F-X" />
+		<Rule Symbol = "Y" Substitution = "oYX--XX++" />
+	</DrawVoxelCave>
+
+	<Erode Likelihood = "0.5" />
+
+	<PlaceRoom Filename = "data/roompattern_sphere_aa.irr">
+		<Position X = "379" Y = "239" Z = "497" />
+		<Rotation X = "0" Y = "180" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_sphere.irr">
+		<Position X = "14" Y = "260" Z = "121" />
+		<Rotation X = "0" Y = "0" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square4_aa.irr">
+		<Position X = "539" Y = "281" Z = "378" />
+		<Rotation X = "0" Y = "180" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square4_aa.irr">
+		<Position X = "312" Y = "272" Z = "-80" />
+		<Rotation X = "0" Y = "270" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square4_aa.irr">
+		<Position X = "72" Y = "202" Z = "557" />
+		<Rotation X = "0" Y = "80" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square2_aa.irr">
+		<Position X = "404" Y = "259" Z = "651" />
+		<Rotation X = "0" Y = "90" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square2_aa.irr">
+		<Position X = "145" Y = "260" Z = "0" />
+		<Rotation X = "0" Y = "200" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square2_aa.irr">
+		<Position X = "700" Y = "200" Z = "250" />
+		<Rotation X = "0" Y = "305" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square1_aa.irr">
+		<Position X = "440" Y = "277" Z = "803" />
+		<Rotation X = "0" Y = "90" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square1_aa.irr">
+		<Position X = "287" Y = "270" Z = "-245" />
+		<Rotation X = "0" Y = "270" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square1_aa.irr">
+		<Position X = "-129" Y = "211" Z = "584" />
+		<Rotation X = "0" Y = "20" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square1_aa.irr">
+		<Position X = "-100" Y = "300" Z = "-70" />
+		<Rotation X = "0" Y = "300" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<CorridorSettings Sampling = "0.6" TextureSampling = "0.125">
+		<Point PosX="-4" PosY="-4" TexX="1.4" />
+		<Point PosX="-4" PosY="0" TexX="0.9" />
+		<Point PosX="-3" PosY="2" TexX="0.6" />
+		<Point PosX="-2" PosY="3" TexX="0.3" />
+		<Point PosX="0" PosY="4" TexX="0.0" />
+		<Point PosX="4" PosY="0" TexX="0.9" />
+		<Point PosX="4" PosY="-4" TexX="1.4" />
+		<Point PosX="0" PosY="-4" TexX="2.0" />
+	</CorridorSettings>
+
+	<CorridorDetailobjects>
+		<Detailobject Name = "Torch1" Model = "data/detailobject.3ds" AntiAliasing = "1" Lighting = "0">
+			<Position X = "-4.0" Y = "-0.5" />
+			<Rotation X = "0" Y = "90" Z = "0" />
+			<Scaling X = "1" Y = "1" Z = "1" />
+			<Distance Sampling = "0.6" NumFactor = "4" NumMin = "3" NumMax = "3" />
+			<FirstAndLast NumMinFirst ="0" NumMaxFirst = "0" ObjectAt1 = "0" />
+		</Detailobject>
+		<Detailobject Name = "Torch2" Model = "data/detailobject.3ds" AntiAliasing = "1" Lighting = "0">
+			<Position X = "4.0" Y = "-0.5" />
+			<Rotation X = "0" Y = "270" Z = "0" />
+			<Scaling X = "1" Y = "1" Z = "1" />
+			<Distance Sampling = "0.6" NumFactor = "4" NumMin = "3" NumMax = "3" />
+			<FirstAndLast NumMinFirst ="0" NumMaxFirst = "0" ObjectAt1 = "0" />
+		</Detailobject>
+	</CorridorDetailobjects>
+
+	<CorridorRoomRoom>
+		<Room Index = "0" DockingSite = "2" Distance = "4" Strength = "200" />
+		<Room Index = "2" DockingSite = "1" Distance = "4" Strength = "200" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "0" DockingSite = "1" Distance = "4" Strength = "100" />
+		<Room Index = "5" DockingSite = "0" Distance = "4" Strength = "100" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "5" DockingSite = "1" Distance = "4" Strength = "100" />
+		<Room Index = "8" DockingSite = "0" Distance = "4" Strength = "100" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "2" DockingSite = "2" Distance = "4" Strength = "150" />
+		<Room Index = "7" DockingSite = "0" Distance = "4" Strength = "250" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "2" DockingSite = "3" Distance = "4" Strength = "150" />
+		<Room Index = "7" DockingSite = "1" Distance = "4" Strength = "250" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "1" DockingSite = "1" Distance = "4" Strength = "200" />
+		<Room Index = "6" DockingSite = "0" Distance = "4" Strength = "200" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "1" DockingSite = "2" Distance = "4" Strength = "200" />
+		<Room Index = "11" DockingSite = "0" Distance = "4" Strength = "200" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "6" DockingSite = "1" Distance = "4" Strength = "200" />
+		<Room Index = "3" DockingSite = "3" Distance = "4" Strength = "200" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "3" DockingSite = "2" Distance = "4" Strength = "100" />
+		<Room Index = "9" DockingSite = "0" Distance = "4" Strength = "100" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "4" DockingSite = "1" Distance = "4" Strength = "100" />
+		<Room Index = "10" DockingSite = "0" Distance = "4" Strength = "100" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "4" DockingSite = "2" Distance = "4" Strength = "400" />
+		<Room Index = "4" DockingSite = "3" Distance = "4" Strength = "400" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomCave>
+		<Room Index = "4" DockingSite = "0" Distance = "4" Strength = "100" />
+		<Cave Direction = "3" Distance = "4" Strength = "100" >
+			<MinVox X = "46" Y = "172" Z = "470" />
+			<MaxVox X = "54" Y = "180" Z = "470" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "0" DockingSite = "0" Distance = "4" Strength = "200" />
+		<Cave Direction = "3" Distance = "4" Strength = "200" >
+			<MinVox X = "136" Y = "189" Z = "450" />
+			<MaxVox X = "144" Y = "197" Z = "450" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "0" DockingSite = "3" Distance = "4" Strength = "100" />
+		<Cave Direction = "3" Distance = "4" Strength = "100" >
+			<MinVox X = "389" Y = "231" Z = "450" />
+			<MaxVox X = "397" Y = "239" Z = "450" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "2" DockingSite = "0" Distance = "4" Strength = "400" />
+		<Cave Direction = "3" Distance = "4" Strength = "200" >
+			<MinVox X = "478" Y = "257" Z = "260" />
+			<MaxVox X = "486" Y = "265" Z = "260" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "3" DockingSite = "1" Distance = "4" Strength = "400" />
+		<Cave Direction = "2" Distance = "4" Strength = "400" >
+			<MinVox X = "460" Y = "264" Z = "80" />
+			<MaxVox X = "468" Y = "272" Z = "80" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "3" DockingSite = "0" Distance = "4" Strength = "50" />
+		<Cave Direction = "2" Distance = "4" Strength = "50" >
+			<MinVox X = "340" Y = "287" Z = "40" />
+			<MaxVox X = "348" Y = "295" Z = "40" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "1" DockingSite = "0" Distance = "4" Strength = "400" />
+		<Cave Direction = "0" Distance = "4" Strength = "300" >
+			<MinVox X = "50" Y = "318" Z = "262" />
+			<MaxVox X = "50" Y = "326" Z = "270" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "1" DockingSite = "3" Distance = "4" Strength = "100" />
+		<Cave Direction = "2" Distance = "4" Strength = "100" >
+			<MinVox X = "80" Y = "181" Z = "240" />
+			<MaxVox X = "88" Y = "189" Z = "240" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorSettings Sampling = "0.6" TextureSampling = "0.125">
+		<Point PosX="-4" PosY="-4" TexX="0.0" />
+		<Point PosX="-4" PosY="4" TexX="1.0" />
+		<Point PosX="4" PosY="4" TexX="2.0" />
+		<Point PosX="4" PosY="-4" TexX="1.0" />
+	</CorridorSettings>
+
+	<CorridorDetailobjects>
+		<Detailobject Name = "Torch1" Model = "data/detailobject.3ds" AntiAliasing = "1" Lighting = "0">
+			<Position X = "-4.0" Y = "0.0" />
+			<Rotation X = "0" Y = "90" Z = "0" />
+			<Scaling X = "1" Y = "1" Z = "1" />
+			<Distance Sampling = "0.6" NumFactor = "4" NumMin = "3" NumMax = "3" />
+			<FirstAndLast NumMinFirst ="0" NumMaxFirst = "0" ObjectAt1 = "0" />
+		</Detailobject>
+		<Detailobject Name = "Torch2" Model = "data/detailobject.3ds" AntiAliasing = "1" Lighting = "0">
+			<Position X = "4.0" Y = "0.0" />
+			<Rotation X = "0" Y = "270" Z = "0" />
+			<Scaling X = "1" Y = "1" Z = "1" />
+			<Distance Sampling = "0.6" NumFactor = "4" NumMin = "3" NumMax = "3" />
+			<FirstAndLast NumMinFirst ="0" NumMaxFirst = "0" ObjectAt1 = "0" />
+		</Detailobject>
+	</CorridorDetailobjects>
+
+	<CorridorCaveCave>
+		<Cave Direction = "1" Distance = "4" Strength = "200" >
+			<MinVox X = "300" Y = "306" Z = "205" />
+			<MaxVox X = "302" Y = "314" Z = "213" />
+		</Cave>
+		<Cave Direction = "0" Distance = "4" Strength = "200" >
+			<MinVox X = "350" Y = "244" Z = "259" />
+			<MaxVox X = "352" Y = "252" Z = "267" />
+		</Cave>
+	</CorridorCaveCave>
+
+	<Filter />
+
+	<GenerateMeshCave NormalWeighting = "0" />
+
+</DunGen>
+\endcode
+
+*/
+
+# ==============================================================================================================================================================
+
+/*!
+\page tutorial3 Tutorial 3: Custom Materials
+
+You can create your own materials for corridors and the cave.
+This tutorial shows you, how to use custom materials.
+At first you need some custom materials. Custom materials have to derive from DunGen::CMaterialDunGen .
+The custom material has to create a material "Material".
+It also has to implement the virtual function "OnSetConstants", which sets the necessary shader constants.
+Here is the first material, the material for the cave:
+\code
+#ifndef MATERIALCAVECUSTOM_H
+#define MATERIALCAVECUSTOM_H
+
+#include <DunGen.h>
+#include <iostream>
+#include <time.h>
+
+class CMaterialCaveCustom : public DunGen::CMaterialDunGen
+{
+public:
+	/// set shader constants
+	CMaterialCaveCustom(irr::IrrlichtDevice* irrDevice_)
+	{
+		IrrDevice = irrDevice_;
+		Offset[3] = 0.0f;
+
+		std::cout << "Creating material cave custom ... ";
+
+		// create material
+		Material = static_cast<irr::video::E_MATERIAL_TYPE>(
+			irrDevice_->getVideoDriver()->getGPUProgrammingServices()->addHighLevelShaderMaterialFromFiles(
+			"data/CaveTut03.shader",
+			"vertexMain",
+			irr::video::EVST_VS_2_0,
+			"data/CaveTut03.shader",
+			"pixelMain",
+			irr::video::EPST_PS_2_0,
+			this,
+			irr::video::EMT_SOLID));
+
+		std::cout << "done." << std::endl;
+	}
+
+	/// set shader constants
+	virtual void OnSetConstants(irr::video::IMaterialRendererServices* services_,
+		irr::s32 userData_)
+	{
+		// compute color position offsets
+		Offset[0] = static_cast<float>(static_cast<int>(clock()/7)%1024);
+		if (Offset[0] > 512.0f)
+			Offset[0] = 1024.0f - Offset[0];
+		Offset[1] = static_cast<float>(static_cast<int>(clock()/11)%1024);
+		if (Offset[1] > 512.0f)
+			Offset[1] = 1024.0f - Offset[1];
+		Offset[2] = static_cast<float>(static_cast<int>(clock()/13)%1024);
+		if (Offset[2] > 512.0f)
+			Offset[2] = 1024.0f - Offset[2];
+
+		// camera position = position of the light source
+		irr::core::vector3df pos = IrrDevice->getSceneManager()->getActiveCamera()->getAbsolutePosition();
+		services_->setVertexShaderConstant("mLightPos", reinterpret_cast<irr::f32*>(&pos), 3);
+		services_->setVertexShaderConstant("mOffset", reinterpret_cast<irr::f32*>(&Offset), 4);
+
+		// set world-view-projection matrix
+		irr::core::matrix4 worldViewProj;
+		worldViewProj = IrrDevice->getVideoDriver()->getTransform(irr::video::ETS_PROJECTION);
+		worldViewProj *= IrrDevice->getVideoDriver()->getTransform(irr::video::ETS_VIEW);
+		worldViewProj *= IrrDevice->getVideoDriver()->getTransform(irr::video::ETS_WORLD);
+		services_->setVertexShaderConstant("mWorldViewProj", worldViewProj.pointer(), 16);
+	}
+
+private:
+	irr::IrrlichtDevice* IrrDevice;			///< the irrlicht device
+	irr::f32 Offset[4];						///< current color position offsets
+};
+
+#endif
+\endcode
+
+The second material is for the corridors:
+\code
+#ifndef MATERIALCORRIDORCUSTOM_H
+#define MATERIALCORRIDORCUSTOM_H
+
+#include <DunGen.h>
+#include <iostream>
+
+class CMaterialCorridorCustom : public DunGen::CMaterialDunGen
+{
+public:
+	/// constructor
+	CMaterialCorridorCustom(irr::IrrlichtDevice* irrDevice_)
+	{
+		IrrDevice = irrDevice_;
+		Offset[3] = 0.0f;
+
+		std::cout << "Creating material corridor custom ... ";
+
+		// create material
+		Material = static_cast<irr::video::E_MATERIAL_TYPE>(
+			irrDevice_->getVideoDriver()->getGPUProgrammingServices()->addHighLevelShaderMaterialFromFiles(
+			"data/CorridorTut03.shader",
+			"vertexMain",
+			irr::video::EVST_VS_2_0,
+			"data/CorridorTut03.shader",
+			"pixelMain",
+			irr::video::EPST_PS_2_0,
+			this,
+			irr::video::EMT_SOLID));
+
+		std::cout << "done." << std::endl;
+	}
+
+	/// set shader constants
+	virtual void OnSetConstants(irr::video::IMaterialRendererServices* services_,
+		irr::s32 userData_)
+	{
+		// compute color position offsets
+		Offset[0] = static_cast<float>(static_cast<int>(clock()/7)%1024);
+		if (Offset[0] > 512.0f)
+			Offset[0] = 1024.0f - Offset[0];
+		Offset[1] = static_cast<float>(static_cast<int>(clock()/11)%1024);
+		if (Offset[1] > 512.0f)
+			Offset[1] = 1024.0f - Offset[1];
+		Offset[2] = static_cast<float>(static_cast<int>(clock()/13)%1024);
+		if (Offset[2] > 512.0f)
+			Offset[2] = 1024.0f - Offset[2];
+
+		// camera position = position of the light source
+		irr::core::vector3df pos = IrrDevice->getSceneManager()->getActiveCamera()->getAbsolutePosition();
+		services_->setVertexShaderConstant("mLightPos", reinterpret_cast<irr::f32*>(&pos), 3);
+		services_->setVertexShaderConstant("mOffset", reinterpret_cast<irr::f32*>(&Offset), 4);
+
+		// set world-view-projection matrix
+		irr::core::matrix4 worldViewProj;
+		worldViewProj = IrrDevice->getVideoDriver()->getTransform(irr::video::ETS_PROJECTION);
+		worldViewProj *= IrrDevice->getVideoDriver()->getTransform(irr::video::ETS_VIEW);
+		worldViewProj *= IrrDevice->getVideoDriver()->getTransform(irr::video::ETS_WORLD);
+		services_->setVertexShaderConstant("mWorldViewProj", worldViewProj.pointer(), 16);
+	}
+
+private:
+	irr::IrrlichtDevice* IrrDevice;			///< the irrlicht device
+	irr::f32 Offset[4];						///< current color position offsets
+};
+
+#endif
+\endcode
+
+The code for the main function is the following.
+It reads a dungeon from XML and shows it, using the custom materials.
+\code
+#include <iostream>
+#include <irrlicht.h>
+#include <DunGen.h>
+#include "MaterialCaveCustom.h"
+#include "MaterialCorridorCustom.h"
+
+#ifdef _MSC_VER
+#pragma comment(lib, "Irrlicht.lib")
+#pragma comment(lib, "DunGen.lib")
+#endif
+
+int main(int argc, char* argv[])
+{
+	// check for additional parameters: resolution, anti aliasing
+	irr::core::dimension2du resolution = irr::core::dimension2du(1200, 900);
+	if (argc>=3)
+	{
+		resolution.Width = atoi(argv[1]);
+		resolution.Height = atoi(argv[2]);
+	}
+	int antiAlias = 0;
+	if (argc>=4)
+		antiAlias = atoi(argv[3]);
+	char* filename = "dungeon_ascending.xml";
+	if (argc>=5)
+		filename = argv[4];
+
+	std::cout << "Dungeongenerator Tutorial 03 is started." << std::endl;
+	std::cout << "Resolution is: " << resolution.Width << " * " << resolution.Height << " , AntiAliasing: " <<  antiAlias << " , Filename: " <<  filename << std::endl;
+
+	// create Irrlicht device
+	irr::SIrrlichtCreationParameters irrlichtParameter;
+	irrlichtParameter.DriverType = irr::video::EDT_DIRECT3D9;
+	irrlichtParameter.WindowSize = resolution;
+	irrlichtParameter.Bits = 32;
+	irrlichtParameter.Fullscreen = false;
+	irrlichtParameter.Stencilbuffer = false;
+	irrlichtParameter.Vsync = false;
+	irrlichtParameter.AntiAlias = antiAlias;
+	irrlichtParameter.EventReceiver = 0;
+
+	irr::IrrlichtDevice* irrDevice = irr::createDeviceEx(irrlichtParameter);
+	if(irrDevice == 0)
+	{
+		std::cout << "Irrlicht device could not be created, program is terminated." << std::endl;
+		return 1;
+	}
+	irr::scene::ISceneManager* sceneManager = irrDevice->getSceneManager();
+	irr::video::IVideoDriver* videoDriver = irrDevice->getVideoDriver();
+	irrDevice->setWindowCaption(L"Dungeongenerator Tutorial 03: Custom materials.");
+
+	//************************************************************************
+	// Start of dungeon creation
+	//************************************************************************
+
+	// create Dungeongenerator instance
+	DunGen::CDunGen *dunGen = new DunGen::CDunGen(irrDevice);
+	dunGen->StartUp();
+	dunGen->SetPrintToConsole(true);
+
+	// read Dungeon from file
+	dunGen->ReadDungeonFromFile(filename);
+
+	// set custom materials
+	CMaterialCaveCustom* matCave = new CMaterialCaveCustom(irrDevice);
+	CMaterialCorridorCustom* matCorridor = new CMaterialCorridorCustom(irrDevice);
+	dunGen->MaterialSetCustom(DunGen::SMaterialType::CAVE_CUSTOM, matCave, false, true);
+	dunGen->MaterialSetCustom(DunGen::SMaterialType::CORRIDOR_CUSTOM, matCorridor, false, true);
+
+	// assemble dungeon
+	dunGen->AddDungeon(sceneManager->getRootSceneNode(),sceneManager);
+
+	// deletes all not used objects from the Dungeongenerator to save memory
+	dunGen->ShutDown();
+
+	//************************************************************************
+	// Dungeon creation finished
+	//************************************************************************
+
+	// create camera
+	irr::scene::ICameraSceneNode* camera = sceneManager->addCameraSceneNodeFPS(0,100.0f,0.05f);
+	camera->setFarValue(20000.0f);
+	camera->setPosition(irr::core::vector3df(0,0,0));
+	camera->setTarget(irr::core::vector3df(99999.f, 99999.f, 99999.f));
+
+	irr::s32 lastFPS(0), actFPS(0);
+	irr::core::vector3d<int> lastCamPos(-1,-1,-1);
+	irr::core::vector3d<int> actCamPos(0,0,0);
+	irr::core::vector3df tmp;
+
+	// as long as the engine is active:
+	while(irrDevice->run() && videoDriver)
+	{
+		if (irrDevice->isWindowActive())
+		{
+			// draw everything
+			videoDriver->beginScene(true, true, irr::video::SColor(255,100,101,140));
+			sceneManager->drawAll();
+			videoDriver->endScene();
+
+			actFPS = videoDriver->getFPS();
+
+			tmp = camera->getAbsolutePosition();
+			actCamPos.X = static_cast<int>(tmp.X + 0.5f);
+			actCamPos.Y = static_cast<int>(tmp.Y + 0.5f);
+			actCamPos.Z = static_cast<int>(tmp.Z + 0.5f);
+
+			if (actFPS != lastFPS || lastCamPos != actCamPos)
+			{
+				// update FPS and camera position
+				// and show them as window name
+				lastFPS = actFPS;
+				lastCamPos = actCamPos;
+
+				irr::core::stringw str = L"Dungeongenerator Tutorial 03: Custom Materials. - FPS: ";
+				str += actFPS;
+				str += " - Position: (";
+				str += actCamPos.X;
+				str += ",";
+				str += actCamPos.Y;
+				str += ",";
+				str += actCamPos.Z;
+				str += ")";
+
+				irrDevice->setWindowCaption(str.c_str());
+			}
+		}
+		else
+			irrDevice->yield();
+	}
+
+	// destroy the engine
+	irrDevice->drop();
+	delete matCave;
+	delete matCorridor;
+	return 0;
+}
+\endcode
+
+*/
+
+# ==============================================================================================================================================================
+
+/*!
+\page tools Tools
+
+\section RandomCaves
+
+RandomsCaves is a tool, which allows you to create random caves and save them as XML for later usage.
+You can read the caves with DunGen::CDunGen::ReadDungeonFromFile .
+You can also extend the saved XML dungeons by yourself (not within the tool) with material settings, corridors and so on.
+The settings are editable with the XML file "RandomCavesConfig.xml".
+The settings are the following.
+Rules are created for each symbol in Start::Symbols string and Rules::Symbols except the symbols "[]+-ouzg|$!".
+
+- __General__ : _Deriavtion_ ... the start derivation of the cave
+- __Start__ : _Symbols_ ... the allowed symbols for the L-system start string.  The more a symbol occurs, the higher the probability it occurs in the start string.
+- __Start__ : _Min_ ... the minimum length of the start string.
+- __Start__ : _Max_ ... the maximum length of the start string.
+- __Rules__ : _Symbols_ ... the allowed symbols for a substitution string.  The more a symbol occurs, the higher the probability it occurs in the substitution string.
+- __Rules__ : _Min_ ... the minimum length of the start string.
+- __Rules__ : _Max_ ... the maximum length of the start string.
+- __AngleYaw__ : _Min_ ... the minimum value for the yaw angle.
+- __AngleYaw__ : _Max_ ... the maximum value for the yaw angle.
+- __AngleYaw__ : _Digits_ ... the number of decimal places for the yaw angle (can be negative for zeros before the decimal point).
+- __AnglePitch__ : _Min_ ... the minimum value for the yaw angle.
+- __AnglePitch__ : _Max_ ... the maximum value for the yaw angle.
+- __AnglePitch__ : _Digits_ ... the number of decimal places for the pitch angle (can be negative for zeros before the decimal point).
+- __AngleRoll__ : _Min_ ... the minimum value for the roll angle.
+- __AngleRoll__ : _Max_ ... the maximum value for the roll angle.
+- __AngleRoll__ : _Digits_ ... the number of decimal places for the roll angle (can be negative for zeros before the decimal point).
+- __RadiusStart__ : _Min_ ... the minimum value for the start radius.
+- __RadiusStart__ : _Max_ ... the maximum value for the start radius.
+- __RadiusStart__ : _Digits_ ... the number of decimal places for the start radius (can be negative for zeros before the decimal point).
+- __RadiusFactor__ : _Min_ ... the minimum value for the radius factor.
+- __RadiusFactor__ : _Max_ ... the maximum value for the radius factor.
+- __RadiusFactor__ : _Digits_ ... the number of decimal places for the radius factor (can be negative for zeros before the decimal point).
+- __RadiusDecrement__ : _Min_ ... the minimum value for the for the radius decrement.
+- __RadiusDecrement__ : _Max_ ... the maximum value for the for the radius decrement.
+- __RadiusDecrement__ : _Digits_ ... the number of decimal places for the radius decrement (can be negative for zeros before the decimal point).
+
+The controls within the tool are:
+- __F5__ create random cave.
+- __F6__ save current dungeon to file.
+- __F7__ decrease L-system derivation.
+- __F8__ increase L-system derivation.
+
+*/

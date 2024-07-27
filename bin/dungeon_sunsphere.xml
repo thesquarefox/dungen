@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+
+<DunGen>
+	<Materials BackfaceCulling = "0" AntiAliasing = "1" >
+		<Cave Shader = "SingleColor" Red = "1.0" Green = "0.7" Blue = "0.4" />
+		<Corridor Texture = "data/corridor_texture.jpg" />
+	</Materials>
+
+	<RandomGenerator Seed = "0" A = "1103515245" C = "12345" M = "32768" />
+
+	<WarpOptions Warping = "1" Smoothing = "1" WarpRandomSeed = "0" WarpStrength = "0.45" />
+
+	<DrawVoxelCave StartString = "W" StartRadius = "32" Derivation = "20">
+		<Basic VoxelBorder = "3" MinDrawRadius = "3" />
+		<Radius RadiusFactor = "1" RadiusDecrement = "0" />
+		<Angle Yaw = "10" Pitch = "10" Roll = "0"	/>
+		<Rule Symbol = "W" Substitution = "W+[X]" />
+		<Rule Symbol = "X" Substitution = "YYYYYYYYY" />
+		<Rule Symbol = "Y" Substitution = "FoFoFoFo" />
+	</DrawVoxelCave>
+	
+	<PlaceRoom Filename = "data/roompattern_square2_aa.irr">
+		<Position X = "100" Y = "300" Z = "-100" />
+		<Rotation X = "0" Y = "0" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+	
+	<PlaceRoom Filename = "data/roompattern_square2_aa.irr">
+		<Position X = "-100" Y = "200" Z = "100" />
+		<Rotation X = "0" Y = "270" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<CorridorSettings Sampling = "0.6" TextureSampling = "0.125">
+		<Point PosX="-4" PosY="-4" TexX="1.4" />
+		<Point PosX="-4" PosY="0" TexX="0.9" />
+		<Point PosX="-3" PosY="2" TexX="0.6" />
+		<Point PosX="-2" PosY="3" TexX="0.3" />
+		<Point PosX="0" PosY="4" TexX="0.0" />
+		<Point PosX="4" PosY="0" TexX="0.9" />
+		<Point PosX="4" PosY="-4" TexX="1.4" />
+		<Point PosX="0" PosY="-4" TexX="2.0" />
+	</CorridorSettings>
+
+	<CorridorDetailobjects>
+		<Detailobject Name = "Torch1" Model = "data/detailobject.3ds" AntiAliasing = "1" Lighting = "0">
+			<Position X = "-4.0" Y = "-0.5" />
+			<Rotation X = "0" Y = "90" Z = "0" />
+			<Scaling X = "1" Y = "1" Z = "1" />
+			<Distance Sampling = "0.6" NumFactor = "4" NumMin = "3" NumMax = "3" />
+			<FirstAndLast NumMinFirst ="0" NumMaxFirst = "0" ObjectAt1 = "0" />
+		</Detailobject>
+		<Detailobject Name = "Torch2" Model = "data/detailobject.3ds" AntiAliasing = "1" Lighting = "0">
+			<Position X = "4.0" Y = "-0.5" />
+			<Rotation X = "0" Y = "270" Z = "0" />
+			<Scaling X = "1" Y = "1" Z = "1" />
+			<Distance Sampling = "0.6" NumFactor = "4" NumMin = "3" NumMax = "3" />
+			<FirstAndLast NumMinFirst ="0" NumMaxFirst = "0" ObjectAt1 = "0" />
+		</Detailobject>
+	</CorridorDetailobjects>
+	
+	<CorridorRoomRoom>
+		<Room Index = "0" DockingSite = "1" Distance = "4" Strength = "200" />
+		<Room Index = "1" DockingSite = "1" Distance = "4" Strength = "200" />
+	</CorridorRoomRoom>
+	
+	<CorridorRoomCave>
+		<Room Index = "0" DockingSite = "0" Distance = "4" Strength = "200" />
+		<Cave Direction = "2" Distance = "4" Strength = "200" >
+			<MinVox X = "252" Y = "252" Z = "0" />
+			<MaxVox X = "260" Y = "260" Z = "0" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "1" DockingSite = "0" Distance = "4" Strength = "200" />
+		<Cave Direction = "0" Distance = "4" Strength = "200" >
+			<MinVox X = "0" Y = "252" Z = "252" />
+			<MaxVox X = "0" Y = "260" Z = "260" />
+		</Cave>
+	</CorridorRoomCave>
+	
+	<CorridorCaveCave>
+		<Cave Direction = "1" Distance = "4" Strength = "700" >
+			<MinVox X = "511" Y = "252" Z = "252" />
+			<MaxVox X = "511" Y = "260" Z = "260" />
+		</Cave>
+		<Cave Direction = "3" Distance = "4" Strength = "700" >
+			<MinVox X = "252" Y = "252" Z = "511" />
+			<MaxVox X = "260" Y = "260" Z = "511" />
+		</Cave>
+	</CorridorCaveCave>
+
+	<Filter />
+
+	<GenerateMeshCave NormalWeighting = "0" />
+
+</DunGen>

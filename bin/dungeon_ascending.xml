@@ -1,0 +1,282 @@
+<?xml version="1.0"?>
+
+<DunGen>
+	<Materials BackfaceCulling = "0" AntiAliasing = "1" >
+		<Cave Shader = "MultiColor" Red = "1.0" Green = "1.0" Blue = "1.0" />
+		<Corridor Texture = "data/corridor_texture.jpg" />
+	</Materials>
+
+	<RandomGenerator Seed = "0" A = "1103515245" C = "12345" M = "32768" />
+
+	<WarpOptions Warping = "1" Smoothing = "1" WarpRandomSeed = "0" WarpStrength = "0.45" />
+
+	<DrawVoxelCave StartString = "YYFYF" StartRadius = "14" Derivation = "8">
+		<Basic VoxelBorder = "3" MinDrawRadius = "3" />
+		<Radius RadiusFactor = "1" RadiusDecrement = "0" />
+		<Angle Yaw = "250" Pitch = "1" Roll = "0"	/>
+		<Rule Symbol = "F" Substitution = "F-YX-X---" />
+		<Rule Symbol = "X" Substitution = "F$F++F-X" />
+		<Rule Symbol = "Y" Substitution = "oYX--XX++" />
+	</DrawVoxelCave>
+
+	<Erode Likelihood = "0.5" />
+
+	<PlaceRoom Filename = "data/roompattern_sphere_aa.irr">
+		<Position X = "379" Y = "239" Z = "497" />
+		<Rotation X = "0" Y = "180" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_sphere.irr">
+		<Position X = "14" Y = "260" Z = "121" />
+		<Rotation X = "0" Y = "0" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square4_aa.irr">
+		<Position X = "539" Y = "281" Z = "378" />
+		<Rotation X = "0" Y = "180" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square4_aa.irr">
+		<Position X = "312" Y = "272" Z = "-80" />
+		<Rotation X = "0" Y = "270" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square4_aa.irr">
+		<Position X = "72" Y = "202" Z = "557" />
+		<Rotation X = "0" Y = "80" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square2_aa.irr">
+		<Position X = "404" Y = "259" Z = "651" />
+		<Rotation X = "0" Y = "90" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square2_aa.irr">
+		<Position X = "145" Y = "260" Z = "0" />
+		<Rotation X = "0" Y = "200" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square2_aa.irr">
+		<Position X = "700" Y = "200" Z = "250" />
+		<Rotation X = "0" Y = "305" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square1_aa.irr">
+		<Position X = "440" Y = "277" Z = "803" />
+		<Rotation X = "0" Y = "90" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square1_aa.irr">
+		<Position X = "287" Y = "270" Z = "-245" />
+		<Rotation X = "0" Y = "270" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square1_aa.irr">
+		<Position X = "-129" Y = "211" Z = "584" />
+		<Rotation X = "0" Y = "20" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<PlaceRoom Filename = "data/roompattern_square1_aa.irr">
+		<Position X = "-100" Y = "300" Z = "-70" />
+		<Rotation X = "0" Y = "300" Z = "0" />
+		<Scaling X = "1" Y = "1" Z = "1" />
+	</PlaceRoom>
+
+	<CorridorSettings Sampling = "0.6" TextureSampling = "0.125">
+		<Point PosX="-4" PosY="-4" TexX="1.4" />
+		<Point PosX="-4" PosY="0" TexX="0.9" />
+		<Point PosX="-3" PosY="2" TexX="0.6" />
+		<Point PosX="-2" PosY="3" TexX="0.3" />
+		<Point PosX="0" PosY="4" TexX="0.0" />
+		<Point PosX="4" PosY="0" TexX="0.9" />
+		<Point PosX="4" PosY="-4" TexX="1.4" />
+		<Point PosX="0" PosY="-4" TexX="2.0" />
+	</CorridorSettings>
+
+	<CorridorDetailobjects>
+		<Detailobject Name = "Torch1" Model = "data/detailobject.3ds" AntiAliasing = "1" Lighting = "0">
+			<Position X = "-4.0" Y = "-0.5" />
+			<Rotation X = "0" Y = "90" Z = "0" />
+			<Scaling X = "1" Y = "1" Z = "1" />
+			<Distance Sampling = "0.6" NumFactor = "4" NumMin = "3" NumMax = "3" />
+			<FirstAndLast NumMinFirst ="0" NumMaxFirst = "0" ObjectAt1 = "0" />
+		</Detailobject>
+		<Detailobject Name = "Torch2" Model = "data/detailobject.3ds" AntiAliasing = "1" Lighting = "0">
+			<Position X = "4.0" Y = "-0.5" />
+			<Rotation X = "0" Y = "270" Z = "0" />
+			<Scaling X = "1" Y = "1" Z = "1" />
+			<Distance Sampling = "0.6" NumFactor = "4" NumMin = "3" NumMax = "3" />
+			<FirstAndLast NumMinFirst ="0" NumMaxFirst = "0" ObjectAt1 = "0" />
+		</Detailobject>
+	</CorridorDetailobjects>
+
+	<CorridorRoomRoom>
+		<Room Index = "0" DockingSite = "2" Distance = "4" Strength = "200" />
+		<Room Index = "2" DockingSite = "1" Distance = "4" Strength = "200" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "0" DockingSite = "1" Distance = "4" Strength = "100" />
+		<Room Index = "5" DockingSite = "0" Distance = "4" Strength = "100" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "5" DockingSite = "1" Distance = "4" Strength = "100" />
+		<Room Index = "8" DockingSite = "0" Distance = "4" Strength = "100" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "2" DockingSite = "2" Distance = "4" Strength = "150" />
+		<Room Index = "7" DockingSite = "0" Distance = "4" Strength = "250" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "2" DockingSite = "3" Distance = "4" Strength = "150" />
+		<Room Index = "7" DockingSite = "1" Distance = "4" Strength = "250" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "1" DockingSite = "1" Distance = "4" Strength = "200" />
+		<Room Index = "6" DockingSite = "0" Distance = "4" Strength = "200" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "1" DockingSite = "2" Distance = "4" Strength = "200" />
+		<Room Index = "11" DockingSite = "0" Distance = "4" Strength = "200" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "6" DockingSite = "1" Distance = "4" Strength = "200" />
+		<Room Index = "3" DockingSite = "3" Distance = "4" Strength = "200" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "3" DockingSite = "2" Distance = "4" Strength = "100" />
+		<Room Index = "9" DockingSite = "0" Distance = "4" Strength = "100" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "4" DockingSite = "1" Distance = "4" Strength = "100" />
+		<Room Index = "10" DockingSite = "0" Distance = "4" Strength = "100" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomRoom>
+		<Room Index = "4" DockingSite = "2" Distance = "4" Strength = "400" />
+		<Room Index = "4" DockingSite = "3" Distance = "4" Strength = "400" />
+	</CorridorRoomRoom>
+
+	<CorridorRoomCave>
+		<Room Index = "4" DockingSite = "0" Distance = "4" Strength = "100" />
+		<Cave Direction = "3" Distance = "4" Strength = "100" >
+			<MinVox X = "46" Y = "172" Z = "470" />
+			<MaxVox X = "54" Y = "180" Z = "471" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "0" DockingSite = "0" Distance = "4" Strength = "200" />
+		<Cave Direction = "3" Distance = "4" Strength = "200" >
+			<MinVox X = "136" Y = "189" Z = "450" />
+			<MaxVox X = "144" Y = "197" Z = "451" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "0" DockingSite = "3" Distance = "4" Strength = "100" />
+		<Cave Direction = "3" Distance = "4" Strength = "100" >
+			<MinVox X = "389" Y = "231" Z = "450" />
+			<MaxVox X = "397" Y = "239" Z = "451" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "2" DockingSite = "0" Distance = "4" Strength = "400" />
+		<Cave Direction = "3" Distance = "4" Strength = "200" >
+			<MinVox X = "478" Y = "257" Z = "260" />
+			<MaxVox X = "486" Y = "265" Z = "261" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "3" DockingSite = "1" Distance = "4" Strength = "400" />
+		<Cave Direction = "2" Distance = "4" Strength = "400" >
+			<MinVox X = "460" Y = "264" Z = "80" />
+			<MaxVox X = "468" Y = "272" Z = "81" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "3" DockingSite = "0" Distance = "4" Strength = "50" />
+		<Cave Direction = "2" Distance = "4" Strength = "50" >
+			<MinVox X = "340" Y = "287" Z = "40" />
+			<MaxVox X = "348" Y = "295" Z = "41" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "1" DockingSite = "0" Distance = "4" Strength = "400" />
+		<Cave Direction = "0" Distance = "4" Strength = "300" >
+			<MinVox X = "50" Y = "318" Z = "262" />
+			<MaxVox X = "51" Y = "326" Z = "270" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorRoomCave>
+		<Room Index = "1" DockingSite = "3" Distance = "4" Strength = "100" />
+		<Cave Direction = "2" Distance = "4" Strength = "100" >
+			<MinVox X = "80" Y = "181" Z = "240" />
+			<MaxVox X = "88" Y = "189" Z = "241" />
+		</Cave>
+	</CorridorRoomCave>
+
+	<CorridorSettings Sampling = "0.6" TextureSampling = "0.125">
+		<Point PosX="-4" PosY="-4" TexX="0.0" />
+		<Point PosX="-4" PosY="4" TexX="1.0" />
+		<Point PosX="4" PosY="4" TexX="2.0" />
+		<Point PosX="4" PosY="-4" TexX="1.0" />
+	</CorridorSettings>
+
+	<CorridorDetailobjects>
+		<Detailobject Name = "Torch1" Model = "data/detailobject.3ds" AntiAliasing = "1" Lighting = "0">
+			<Position X = "-4.0" Y = "0.0" />
+			<Rotation X = "0" Y = "90" Z = "0" />
+			<Scaling X = "1" Y = "1" Z = "1" />
+			<Distance Sampling = "0.6" NumFactor = "4" NumMin = "3" NumMax = "3" />
+			<FirstAndLast NumMinFirst ="0" NumMaxFirst = "0" ObjectAt1 = "0" />
+		</Detailobject>
+		<Detailobject Name = "Torch2" Model = "data/detailobject.3ds" AntiAliasing = "1" Lighting = "0">
+			<Position X = "4.0" Y = "0.0" />
+			<Rotation X = "0" Y = "270" Z = "0" />
+			<Scaling X = "1" Y = "1" Z = "1" />
+			<Distance Sampling = "0.6" NumFactor = "4" NumMin = "3" NumMax = "3" />
+			<FirstAndLast NumMinFirst ="0" NumMaxFirst = "0" ObjectAt1 = "0" />
+		</Detailobject>
+	</CorridorDetailobjects>
+
+	<CorridorCaveCave>
+		<Cave Direction = "1" Distance = "4" Strength = "200" >
+			<MinVox X = "300" Y = "306" Z = "205" />
+			<MaxVox X = "302" Y = "314" Z = "213" />
+		</Cave>
+		<Cave Direction = "0" Distance = "4" Strength = "200" >
+			<MinVox X = "350" Y = "244" Z = "259" />
+			<MaxVox X = "352" Y = "252" Z = "267" />
+		</Cave>
+	</CorridorCaveCave>
+
+	<Filter />
+
+	<GenerateMeshCave NormalWeighting = "0" />
+
+</DunGen>
