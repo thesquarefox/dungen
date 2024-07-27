@@ -10,3 +10,5 @@ To use DunGen, you have to:
 a) to add the 'DunGen.lib' file, so add 'bin' to you library folders
 b) to add the 'DunGen\interface' folder to your include folders
 c) have the 'DunGen.dll' in the folder where your project executable is running
+
+This is compatible with the Irrlicht version 1.8.1 .
