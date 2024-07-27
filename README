@@ -12,3 +12,4 @@ b) to add the 'DunGen\interface' folder to your include folders
 c) have the 'DunGen.dll' in the folder where your project executable is running
 
 This is compatible with the Irrlicht version 1.8.1 .
+https://irrlicht.sourceforge.io/
