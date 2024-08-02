@@ -1,4 +1,4 @@
-This is a library for the Irrlicht-3D-Engine to generate procedural 3D-Dungeons.
+This is a library for the Irrlicht-3D-Engine to generate procedural 3D-dungeons.
 
 - Folder 'bin' contains the executables and the DunGen.lib file.
 - Folder 'documentation' contains the doxygen documentation.
