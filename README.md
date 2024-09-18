@@ -1,4 +1,4 @@
-# Dungen
+# DunGen
 
 This is a library for the Irrlicht-3D-Engine for generating procedural 3D-dungeons.
 
